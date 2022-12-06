@@ -12,7 +12,14 @@ pub fn lines(name: &str) -> Vec<String> {
     .collect();
     let str = pathbuf.to_string_lossy().to_string();
     if let Ok(file_str) = std::fs::read_to_string(pathbuf) {
-        file_str.trim().lines().map(String::from).collect()
+        file_str
+            .trim_end()
+            .split('\n')
+            .map(|x| {
+                let y = String::from(x);
+                y
+            })
+            .collect()
     } else {
         panic!("input not found: {}", &str)
     }

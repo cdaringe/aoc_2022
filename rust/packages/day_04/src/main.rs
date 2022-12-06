@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, collections::HashSet};
+use std::collections::HashSet;
 
 use aoc;
 
@@ -36,10 +36,10 @@ impl ElfCleanPair {
 
 fn main() {
     let input = aoc::lines("./input_p1.txt");
-    let elf_pairs = input.iter().map(ElfCleanPair::from_line);
-    let p1 = elf_pairs.clone().filter(|x| x.has_full_overlap()).count();
-    let p2 = elf_pairs.filter(|x| x.has_partial_overlap()).count();
+    let elf_pairs: Vec<ElfCleanPair> = input.iter().map(ElfCleanPair::from_line).collect();
+    let p1 = elf_pairs.iter().filter(|x| x.has_full_overlap()).count();
     println!("p1: {}", p1);
+    let p2 = elf_pairs.iter().filter(|x| x.has_partial_overlap()).count();
     println!("p2: {}", p2);
 }
 

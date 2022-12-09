@@ -84,7 +84,15 @@ impl DirStat {
             dir.to_owned()
         };
         let mut is_first = true;
-        let (first_slugs, rest_slugs): (Vec<_>, Vec<_>) = simple_dir.split("/").partition(|slug| {
+        let normalized = simple_dir.split("/").fold(vec![], |mut acc, it| {
+            if it == ".." {
+                acc.pop();
+            } else {
+                acc.push(it.to_string());
+            }
+            acc
+        });
+        let (first_slugs, rest_slugs): (Vec<_>, Vec<_>) = normalized.iter().partition(|&slug| {
             if is_first {
                 is_first = false;
                 true
@@ -101,29 +109,36 @@ impl DirStat {
                     .entry(slug.to_string())
                     .or_insert(DirStatKind::Dir(DirStat::new_relative(&self.path, slug)))
                 {
-                    DirStatKind::Dir(stat) => stat.get_dirstat(&rest_slugs.join("/")),
+                    DirStatKind::Dir(stat) => stat.get_dirstat(
+                        &rest_slugs
+                            .iter()
+                            .map(|&s| s.to_owned())
+                            .collect::<Vec<String>>()
+                            .join("/"),
+                    ),
                     _ => panic!("only directory expected"),
                 }
             }
         }
     }
 
+    pub fn absolute_of_rel_cwd(&self, rel: &str) -> String {
+        if rel.starts_with("/") {
+            rel.to_string()
+        } else {
+            format!("{}/{}", &self.current_dir, &rel).replace("//", "/")
+        }
+    }
     pub fn play_output(self: &mut Self, input: Input) {
         match input {
             Input::Cd(p) => {
-                let full_dirname = format!("{}/{}", &self.current_dir, &p).replace("//", "/");
-                let stat = self.get_dirstat(if p.starts_with("/") {
-                    &p
-                } else {
-                    &full_dirname
-                });
+                let stat = self.get_dirstat(&self.absolute_of_rel_cwd(&p));
                 self.current_dir = stat.path.clone();
                 println!("cd {} (current: {})", &p, self.current_dir);
                 ()
             }
             Input::File(File::Dir(dir)) => {
-                let full_dirname = format!("{}/{}", &self.current_dir, &dir).replace("//", "/");
-                let stat = self.get_dirstat(&full_dirname);
+                let stat = self.get_dirstat(&self.absolute_of_rel_cwd(&dir));
                 println!("dir {} ({})", &dir, &stat.path);
             }
             Input::File(File::File(a, b)) => {

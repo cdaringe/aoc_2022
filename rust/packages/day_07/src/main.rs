@@ -170,6 +170,31 @@ impl DirStat {
             .sum::<usize>()
             + contribution
     }
+
+    pub fn walk_p2(&self, min_size: usize, (name, size): (String, usize)) -> (String, usize) {
+        let mut best_size = size;
+        let mut best_name = name;
+        for (_name, stat) in self.dirs() {
+            let local_min = stat.total_file_size();
+            if local_min >= min_size {
+                let (a, b) = stat.walk_p2(min_size, (stat.path.clone(), local_min));
+                if b < best_size {
+                    best_name = a;
+                    best_size = b;
+                }
+            }
+        }
+        (best_name, best_size)
+    }
+
+    pub fn p2(&self) {
+        let capacity = 70000000 as usize;
+        let max_usable = capacity - 30000000;
+        let my_size = self.total_file_size();
+        let needs_to_free = my_size - max_usable;
+        let res = self.walk_p2(needs_to_free, (self.path.clone(), my_size));
+        println!("{}, {}", res.0, res.1);
+    }
 }
 
 fn parse_ls(i: &str) -> IResult<&str, Input> {
@@ -221,7 +246,7 @@ fn main() {
         dir_stat.play_output(input);
     }
     println!("p1: {}", dir_stat.total_file_size_p1());
-    // println!("p2: {}", solve(&input, 14));
+    dir_stat.p2();
 }
 
 #[cfg(test)]

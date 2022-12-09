@@ -8,4 +8,5 @@ members = [
     "packages/day_04",
     "packages/day_05",
     "packages/day_06",
+    "packages/day_07",
 ]

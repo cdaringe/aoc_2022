@@ -7,15 +7,13 @@ use grid;
 struct Tree {
     height: u8,
     is_visible: bool,
-    is_boundary: bool,
 }
 
 impl Tree {
-    pub fn new(height: u8, is_boundary: bool) -> Self {
+    pub fn new(height: u8) -> Self {
         Tree {
             height,
             is_visible: false,
-            is_boundary,
         }
     }
 }
@@ -29,7 +27,7 @@ impl Forest {
         let num_cols = self.data.cols();
         let col = idx % num_cols;
         let row = idx / num_cols;
-        println!("idx {}, ({}, {}", idx, col, row);
+        // println!("idx {}, ({}, {})", idx, col, row);
         (col, row)
     }
     pub fn get_mut_at(&mut self, idx: usize) -> &mut Tree {
@@ -104,24 +102,12 @@ impl Forest {
 
 impl From<Vec<String>> for Forest {
     fn from(lines: Vec<String>) -> Self {
-        let num_rows = lines.len();
-        let num_cols = lines.first().unwrap().len();
-        let mut data = grid::Grid::new(0, num_cols);
+        let mut data = grid::Grid::new(0, lines.first().unwrap().len());
         lines.iter().enumerate().for_each(|(row_idx, line)| {
             let row = line
                 .split("")
                 .filter(|x| !x.is_empty())
-                .enumerate()
-                .map(|(col_idx, c)| {
-                    let is_boundary: bool = col_idx == 0
-                        || row_idx == 0
-                        || row_idx == num_rows - 1
-                        || col_idx == num_cols - 1;
-                    Tree::new(
-                        c.parse::<u8>().expect("tree height must be u8"),
-                        is_boundary,
-                    )
-                })
+                .map(|c| Tree::new(c.parse::<u8>().expect("tree height must be u8")))
                 .collect();
             data.insert_row(row_idx, row);
         });

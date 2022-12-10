@@ -27,7 +27,6 @@ impl Forest {
         let num_cols = self.data.cols();
         let col = idx % num_cols;
         let row = idx / num_cols;
-        // println!("idx {}, ({}, {})", idx, col, row);
         (col, row)
     }
     pub fn get_mut_at(&mut self, idx: usize) -> &mut Tree {
@@ -98,6 +97,50 @@ impl Forest {
     pub fn visible(&self) -> Vec<&Tree> {
         self.data.iter().filter(|x| x.is_visible).collect()
     }
+
+    pub fn cell(&self, x: i32, y: i32) -> Option<&Tree> {
+        if x < 0 || y < 0 {
+            None
+        } else {
+            self.data.get(y as usize, x as usize)
+        }
+    }
+
+    pub fn scenic_score_dir(&self, (dx, dy): (i32, i32), ith: usize) -> usize {
+        let (x0, y0) = self.addr_of_pos(ith);
+        let tree0 = self.data.get(y0, x0).unwrap();
+        let mut x = x0 as i32;
+        let mut y = y0 as i32;
+        let mut total = 0;
+        loop {
+            x += dx;
+            y += dy;
+            match self.cell(x, y) {
+                None => break,
+                Some(curr) => {
+                    total += 1;
+                    if curr.height >= tree0.height {
+                        break;
+                    }
+                }
+            }
+        }
+        total
+    }
+
+    pub fn scenic_score(&self, i: usize) -> usize {
+        [(0, -1), (0, 1), (-1, 0), (1, 0)]
+            .iter()
+            .map(|&dir| self.scenic_score_dir(dir, i))
+            .product()
+    }
+
+    pub fn max_scenic_score(&self) -> usize {
+        (0..self.size())
+            .map(|i| self.scenic_score(i))
+            .max()
+            .unwrap()
+    }
 }
 
 impl From<Vec<String>> for Forest {
@@ -120,10 +163,11 @@ impl From<Vec<String>> for Forest {
 }
 
 fn main() {
-    // let lines = aoc::lines("./input_p1.txt");
-    let lines = aoc::lines("packages/day_08/input_p1.txt");
+    let lines = aoc::lines("./input_p1.txt");
+    // let lines = aoc::lines("packages/day_08/input_p1.txt");
     let forest: Forest = lines.into();
     println!("p1: {}", forest.visible().iter().count());
+    println!("p2: {}", forest.max_scenic_score());
 }
 
 #[cfg(test)]
@@ -132,15 +176,24 @@ mod test_day_08 {
 
     #[test]
     fn test_demo_input_p1() {
-        let lines = aoc::lines("packages/day_08/input_p1_demo.txt");
+        // let lines = aoc::lines("packages/day_08/input_p1_demo.txt");
+        let lines = aoc::lines("input_p1_demo.txt");
         let forest: Forest = lines.into();
         assert_eq!(forest.visible().iter().count(), 21);
     }
 
     #[test]
-    fn _test_demo_input_p1() {
-        let lines = aoc::lines("packages/day_08/input_p1_demo.txt");
-        // let lines = aoc::lines("input_p1_demo.txt");
-        assert_eq!(0, 0);
+    fn test_demo_input_p2() {
+        // let lines = aoc::lines("packages/day_08/input_p1_demo.txt");
+        let lines = aoc::lines("input_p1_demo.txt");
+        let forest: Forest = lines.into();
+        assert_eq!(forest.max_scenic_score(), 8);
     }
+
+    // #[test]
+    // fn _test_demo_input_p1() {
+    //     let lines = aoc::lines("packages/day_08/input_p1_demo.txt");
+    //     // let lines = aoc::lines("input_p1_demo.txt");
+    //     assert_eq!(0, 0);
+    // }
 }
